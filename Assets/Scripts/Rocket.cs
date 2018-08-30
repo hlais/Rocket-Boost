@@ -10,6 +10,22 @@ public class Rocket : MonoBehaviour
     [SerializeField]
     float mainRocketThrust = 100f;
 
+    [SerializeField]
+    AudioClip mainEngine;
+    [SerializeField]
+    AudioClip deathExplosion;
+    [SerializeField]
+    AudioClip jingle;
+
+    [SerializeField]
+    ParticleSystem rocketThrust;
+    [SerializeField]
+    ParticleSystem levelCompleteEffect;
+    [SerializeField]
+    ParticleSystem deadthParticleEffect;
+
+
+
     AudioSource rocketSound;
     Rigidbody rocketRigidBody;
 
@@ -27,10 +43,12 @@ public class Rocket : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (state == State.live)
+        {
+            RespondToThrustInput();
 
-        Thrusting();
-
-        Rotating();
+            Rotating();
+        }
 
     }
 
@@ -39,6 +57,7 @@ public class Rocket : MonoBehaviour
     void Rotating()
     {
 
+       
         rocketRigidBody.freezeRotation = true;
        
         float rotationSpeed = rcsThrust * Time.deltaTime;
@@ -57,41 +76,61 @@ public class Rocket : MonoBehaviour
 
     }
 
-    private void Thrusting()
+    private void RespondToThrustInput()
     {
-        float thrustSpeed = mainRocketThrust * Time.deltaTime;
-        if (Input.GetKey(KeyCode.Space))
+        
+        if (Input.GetKey(KeyCode.Space) )
         {
-            rocketRigidBody.AddRelativeForce(new Vector3(0,1,0) * thrustSpeed);
-            if (!rocketSound.isPlaying)
-            {
-                rocketSound.Play();
-            }
+            RespondToRotateInput();
+            rocketThrust.Play();
         }
         else
         {
 
             rocketSound.Stop();
+            rocketThrust.Stop();
+           
         }
 
     }
+
+    private void RespondToRotateInput()
+    {
+        float thrustSpeed = mainRocketThrust * Time.deltaTime;
+        rocketRigidBody.AddRelativeForce(new Vector3(0, 1, 0) * thrustSpeed);
+        if (!rocketSound.isPlaying)
+        {
+            rocketSound.PlayOneShot(mainEngine);
+            
+
+
+        }
+    }
+
     private void OnCollisionEnter(Collision collision)
     {
+        if (state != State.live)
+        {
+            return;
+        }
 
         switch (collision.gameObject.tag)
         {
             case "Finish":
-                state = State.trascending;
-               Invoke("LoadNextLevel",3f);
+
+                SuccessSequence();
                
+                
+
                 break;
 
             case "Friendly":
                 
                 break;
             default:
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
-                    
+                DyingSequence();
+                
+
                 break;
         }
          //if (collision.gameObject.CompareTag("Friendly"))
@@ -101,11 +140,46 @@ public class Rocket : MonoBehaviour
         //}
 
     }
+
+    private void DyingSequence()
+    {
+        state = State.dying;
+        rocketSound.Stop();
+        rocketSound.PlayOneShot(deathExplosion);
+        deadthParticleEffect.Play();
+
+
+        Invoke("LoadPreviousLevel", 2f);
+    }
+
+    private void SuccessSequence()
+    {
+        state = State.trascending;
+        rocketSound.Stop();
+        rocketSound.PlayOneShot(jingle);
+        levelCompleteEffect.Play();
+        Invoke("LoadNextLevel", 3f);
+    }
+
     void  LoadNextLevel()
     {
-       
+        
         int currentLevel = SceneManager.GetActiveScene().buildIndex;
+       
+            SceneManager.LoadScene(currentLevel + 1);
+        
+        
+          
 
-        SceneManager.LoadScene(currentLevel + 1);
+    }
+    void LoadPreviousLevel()
+    {
+        if (SceneManager.GetActiveScene().buildIndex != 0)
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
+        }
+        else
+            SceneManager.LoadScene(0);
+
     }
 }
