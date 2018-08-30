@@ -24,6 +24,8 @@ public class Rocket : MonoBehaviour
     [SerializeField]
     ParticleSystem deadthParticleEffect;
 
+    [SerializeField] float levelLoadDelay = 2f;
+
 
 
     AudioSource rocketSound;
@@ -149,7 +151,7 @@ public class Rocket : MonoBehaviour
         deadthParticleEffect.Play();
 
 
-        Invoke("LoadPreviousLevel", 2f);
+        Invoke("LoadPreviousLevel", levelLoadDelay);
     }
 
     private void SuccessSequence()
@@ -158,7 +160,7 @@ public class Rocket : MonoBehaviour
         rocketSound.Stop();
         rocketSound.PlayOneShot(jingle);
         levelCompleteEffect.Play();
-        Invoke("LoadNextLevel", 3f);
+        Invoke("LoadNextLevel", levelLoadDelay);
     }
 
     void  LoadNextLevel()
