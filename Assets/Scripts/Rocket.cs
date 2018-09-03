@@ -26,7 +26,7 @@ public class Rocket : MonoBehaviour
 
     [SerializeField] float levelLoadDelay = 2f;
 
-
+    bool isCollisionOn = true;
 
     AudioSource rocketSound;
     Rigidbody rocketRigidBody;
@@ -45,11 +45,25 @@ public class Rocket : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        
         if (state == State.live)
         {
             RespondToThrustInput();
 
             Rotating();
+        }
+
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            SuccessSequence();
+        }
+        if (Debug.isDebugBuild)
+        {
+            if (Input.GetKeyDown(KeyCode.C))
+            {
+                Debug.Log(isCollisionOn);
+                isCollisionOn = !isCollisionOn;
+            }
         }
 
     }
@@ -59,8 +73,8 @@ public class Rocket : MonoBehaviour
     void Rotating()
     {
 
-       
-        rocketRigidBody.freezeRotation = true;
+
+        rocketRigidBody.angularVelocity = Vector3.zero; // remove phsics due to rotation
        
         float rotationSpeed = rcsThrust * Time.deltaTime;
         if (Input.GetKey(KeyCode.A))
@@ -74,7 +88,7 @@ public class Rocket : MonoBehaviour
             transform.Rotate(-Vector3.forward * rotationSpeed);
         }
 
-        rocketRigidBody.freezeRotation = false; // resume rotation 
+      
 
     }
 
@@ -111,29 +125,32 @@ public class Rocket : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (state != State.live)
+        if (state != State.live || !isCollisionOn)
         {
             return;
         }
 
-        switch (collision.gameObject.tag)
-        {
-            case "Finish":
+      
+            switch (collision.gameObject.tag)
+            {
+                case "Finish":
 
-                SuccessSequence();
-               
-                
+                    SuccessSequence();
 
-                break;
 
-            case "Friendly":
-                
-                break;
-            default:
-                DyingSequence();
-                
 
-                break;
+                    break;
+
+                case "Friendly":
+
+                    break;
+                default:
+                    DyingSequence();
+
+
+                    break;
+
+            
         }
          //if (collision.gameObject.CompareTag("Friendly"))
          //{
@@ -167,8 +184,15 @@ public class Rocket : MonoBehaviour
     {
         
         int currentLevel = SceneManager.GetActiveScene().buildIndex;
-       
+
+        if (currentLevel !=  SceneManager.sceneCountInBuildSettings -1)
+        {
             SceneManager.LoadScene(currentLevel + 1);
+        }
+        else
+        {
+            SceneManager.LoadScene(0);
+        }
         
         
           
